@@ -1,0 +1,23 @@
+/**  
+	ClearFix mixin based on 
+	
+	http://perishablepress.com/press/2009/12/06/new-clearfix-hack 
+*/
+@clearfix = {
+	
+	^:after {
+		clear: both;
+		content: ' ';
+		display: block;
+		font-size: 0;
+		line-height: 0;
+		visibility: hidden;
+		width: 0;
+		height: 0;
+	}
+	
+	* html ^,
+	*:first-child+html ^ {
+		zoom: 1;
+	}
+}

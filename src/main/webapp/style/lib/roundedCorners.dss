@@ -1,0 +1,48 @@
+/*
+	Normal and individual rounded corners
+*/
+@roundedCorners = (@topLeft = 10px, @topRight = -1, @bottomRight  = -1, @bottomLeft = -1)
+{
+	@topRight = if(expr(@topRight < 0), @topLeft, @topRight); 
+	@bottomRight = if(expr(@bottomRight < 0), @topLeft, @bottomRight); 
+	@bottomLeft = if(expr(@bottomLeft < 0), @topLeft, @bottomLeft); 
+	
+	-moz-border-radius-topleft: @topLeft;
+	-moz-border-radius-topright: @topRight;
+	-moz-border-radius-bottomright: @bottomRight;
+	-moz-border-radius-bottomleft: @bottomLeft;
+	
+	-webkit-border-top-left-radius: @topLeft;
+	-webkit-border-top-right-radius: @topRight;
+	-webkit-border-bottom-right-radius: @bottomRight;
+	-webkit-border-bottom-left-radius: @bottomLeft;
+	
+	-khtml-border-top-left-radius: @topLeft; 
+	-khtml-border-top-right-radius: @topRight;
+	-khtml-border-bottom-right-radius: @bottomRight;
+	-khtml-border-bottom-left-radius: @bottomLeft; 	
+	
+	border-top-left-radius: @topLeft;
+	border-top-right-radius: @topRight;	
+	border-bottom-right-radius: @bottomRight;	
+	border-bottom-left-radius: @bottomLeft;
+}
+
+/*
+	Rounded Corners for e.g. Buttons or Tabs.
+*/
+@tabCorners = (@radius)
+{
+ @roundedCorners(@radius, @radius, 0, 0);	
+}
+
+/*
+	Elliptical rounding (Firefox 3.5+) & WebKit elliptical rounding.
+*/
+@ellipticalCorners = (@first, @second)
+{
+	-moz-border-radius: @first / @second;
+	-webkit-border-radius: @first @second;
+ 	border-radius: @first / @second; 
+ 	-khtml-border-radius: @first @second;
+}

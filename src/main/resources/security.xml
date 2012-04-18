@@ -1,0 +1,38 @@
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+  xmlns:beans="http://www.springframework.org/schema/beans"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+           http://www.springframework.org/schema/security
+           http://www.springframework.org/schema/security/spring-security-3.0.xsd">
+
+    <beans:bean class="org.springframework.beans.factory.annotation.RequiredAnnotationBeanPostProcessor" />
+
+    <http auto-config='true'>
+        <intercept-url pattern="/dss/style/**" access="ROLE_USER,ROLE_ANONYMOUS" />
+        <intercept-url pattern="/script/**" access="ROLE_USER,ROLE_ANONYMOUS" />
+        <intercept-url pattern="/app/login" access="ROLE_USER,ROLE_ANONYMOUS" />
+        <intercept-url pattern="/**" access="ROLE_USER,ROLE_ANONYMOUS" />
+          <openid-login login-page="/app/login/">
+            <attribute-exchange>
+                <openid-attribute name="name" type="http://axschema.org/namePerson" required="true"/>
+            </attribute-exchange>
+          </openid-login>
+          <remember-me key="7J)Vb8)=%o/wyw4kVC;6"/>
+    </http>
+
+    <authentication-manager>
+        <authentication-provider user-service-ref="userDetailsService">
+            <password-encoder ref="passwordEncoder">
+                <salt-source ref="saltSource"/>
+            </password-encoder>
+        </authentication-provider>
+    </authentication-manager>
+    
+    <beans:bean id="passwordEncoder" class="org.springframework.security.authentication.encoding.ShaPasswordEncoder" />
+    
+    <beans:bean id="saltSource" class="org.springframework.security.authentication.dao.ReflectionSaltSource">
+        <beans:property name="userPropertyToUse" value="username" />
+    </beans:bean>
+
+</beans:beans>
