@@ -4,6 +4,8 @@
 <%@taglib tagdir="/WEB-INF/tags" prefix="boom"%>
 <boom:page title="home">
 <jsp:body>
+<div id="container">
 <canvas id="teh_canvas"><p>This only works with browsers supporting canvas.</p></canvas>
+</div>
 </jsp:body>
 </boom:page>

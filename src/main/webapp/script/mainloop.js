@@ -18,15 +18,14 @@ start:
     
             if ( $.browser.mozilla ) {
                 var recursiveAnim = function() {
-                    mainloop();
-                    animFrame();
+                    animFrame(mainloop);
                 };
     
                 // setup for multiple calls
                 window.addEventListener("MozBeforePaint", recursiveAnim, false);
     
                 // start the mainloop
-                animFrame();
+                animFrame.call(window, mainloop);
             } else {
                 var recursiveAnim = function() {
                     mainloop();

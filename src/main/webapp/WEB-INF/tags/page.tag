@@ -9,8 +9,11 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title>${title} -- boom!</title>
+
 <script src="../../script/json2.js"></script>
 <script src="../../script/jquery-1.7.2.min.js"></script>
+<script src="../../script/mainloop.js"></script>
+<script src="../../script/blocks.js"></script>
 <script src="../../script/boom.js"></script>
 
 <link rel="stylesheet" type="text/css" href="../../dss/style/boom.dss" />

@@ -19,6 +19,11 @@ h3
 {
 }
 
+#container
+{
+    margin: 0 auto;
+}
+
 .window
 {
     @window;
@@ -78,4 +83,10 @@ input.text
         font-size: 1.3em;
         line-height: 24px;
     }
+}
+
+#sheet
+{
+    position: absolute;
+    left: -4000px;
 }

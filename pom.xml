@@ -204,7 +204,7 @@
             <artifactId>hibernate-entitymanager</artifactId>
             <version>3.5.6-Final</version>
         </dependency>
-            
+
         <dependency>
             <groupId>joda-time</groupId>
             <artifactId>joda-time</artifactId>
@@ -229,7 +229,7 @@
             <artifactId>opensaga-dynamic-stylesheets</artifactId>
             <version>2.0.3</version>
         </dependency>
-        
+
         <dependency>
             <groupId>org.webbitserver</groupId>
             <artifactId>webbit</artifactId>
@@ -240,7 +240,25 @@
             <artifactId>svenson</artifactId>
             <version>1.4.0</version>
         </dependency>
+
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>3.0.1</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>javax.servlet.jsp</groupId>
+            <artifactId>javax.servlet.jsp-api</artifactId>
+            <version>2.2.1</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.javascript</groupId>
+            <artifactId>closure-compiler</artifactId>
+            <version>r1810</version>
+        </dependency>
+
     </dependencies>
-
-
 </project>
