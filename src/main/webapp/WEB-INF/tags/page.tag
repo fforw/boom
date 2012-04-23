@@ -13,6 +13,9 @@
 <script src="../../script/json2.js"></script>
 <script src="../../script/jquery-1.7.2.min.js"></script>
 <script src="../../script/mainloop.js"></script>
+<script src="../../script/loader.js"></script>
+<script src="../../script/Class.js"></script>
+<script src="../../script/tileset.js"></script>
 <script src="../../script/blocks.js"></script>
 <script src="../../script/boom.js"></script>
 

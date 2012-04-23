@@ -1,5 +1,5 @@
 
-(function($){
+//(function($){
 
 
 // Perform login: Ask user for name, and send message to socket.
@@ -20,15 +20,14 @@
 var level = [];
 var heightMap = [];
 var shadowsMap = [];
-
+var levelImageData = null;
 
 var ws;
-var canvas,tileSize,ratio, width, height;
+var canvas,ctx,tileStep,ratio, width, height;
 
-var $sheet;
 
-var TILE_ROWS = 19;
 var TILES_PER_ROW = 21;
+var TILE_ROWS = 19;
 
 function tileOffset(x,y)
 {
@@ -135,12 +134,14 @@ function blockHeight(block)
 
 function getScaleRatio(w,h)
 {
+    console.debug("%s x %s",w,h);
+    
     var ow = 101 * TILES_PER_ROW;
-    var oh = 139 * (TILE_ROWS) + 171;
+    var oh = 81 * (TILE_ROWS) + 171;
+    console.debug("fullsize = %s x %s",ow,oh);
     
     var wRatio = w / ow;
     var hRatio = h / oh;
-    console.debug("for %s,%s => factors are ", w,h,wRatio,hRatio);
     
     return Math.min(wRatio, hRatio);
 }
@@ -161,21 +162,17 @@ function gap(opt)
 function obstacle()
 {
     var v = Math.random();
-    if (v < 0.25)
+    if (v < 0.333)
     {
         return BLOCK_ROCK;
     }
-    else if (v < 0.5)
+    else if (v < 0.666)
     {
         return BLOCK_TREE_TALL;
     }
-    else if (v < 0.75)
+    else 
     {
         return BLOCK_TREE_SHORT;
-    }
-    else
-    {
-        return BLOCK_TREE_UGLY;
     }
     
 }
@@ -253,12 +250,34 @@ function drawSquare(sx ,sy, w, h, block, randomGap)
     }
 }
 
+
+function drawBlocks(tileX,tileY, x,y)
+{
+    var off = tileOffset(tileX, tileY);
+    var block = level[off];
+    
+    if (block != null)
+    {
+        backgroundSet.draw(ctx,block,x,y);
+    }
+    
+    var shadows = shadowsMap[off];
+    for (var i=0, len = shadows.length; i < len; i++)
+    {
+        var block = shadows[i];
+        if (block != null)
+        {
+            backgroundSet.draw(ctx,block,x,y);
+        }
+    }
+}
+
+var backgroundSet = null;
+
 this.Application = {
 init:
     function()
     {
-        $sheet= $("#sheet");
-    
         var url = 'ws://boom.localhost:9876/appsocket';
 
         console.debug(url);
@@ -268,22 +287,28 @@ init:
         ws.onerror = Application.onerror;
         ws.onmessage = Application.onMessage;
 
-        
-        var $window = $(window);
-
         var $canvas = $("#teh_canvas");
         canvas = $canvas[0];
 
-        console.debug($canvas);
-
+        Loader.load(["../../image/sheet.png","../../image/wizard-anim.png"], Application.onLoad);
+    },
+onLoad:
+    function(images)
+    {
+        var $window = $(window);
         ratio = getScaleRatio($window.width() - 1, $window.height() - 35);
         
-        tileSize = Math.floor(171 * ratio);
-
-        width = tileSize * TILES_PER_ROW;
-        height = (tileSize * (139/171) * TILE_ROWS) + tileSize;
+        console.debug("ratio = %s", ratio);
         
-        // 171, y-step = 84
+        backgroundSet = new TileSet(images[0], 101, 171, ratio);
+        wizardSet = new TileSet(images[1], 101, 171, ratio);
+        
+        console.debug(backgroundSet);
+        
+        tileStep = Math.floor(81 * ratio);
+        
+        width = backgroundSet.scaledTileWidth * TILES_PER_ROW;
+        height = (tileStep * TILE_ROWS) + backgroundSet.scaledTileWidth;
         
         var x = 0;
         var y = 0;
@@ -316,8 +341,6 @@ init:
         setBlock(    0, ymid, BLOCK_PAD);
         setBlock( xmax, ymid, BLOCK_PAD); 
 
-        console.debug("size is %dx%d, %d per tile", width, height, tileSize); 
-
         canvas.width = width;
         canvas.height = height;
         
@@ -336,47 +359,31 @@ init:
             }
         }
         
-        $sheet = $('<img id="sheet" src="../../image/sheet.png">').load(Application.mainLoop);
-    },
-mainLoop:
-    function()
-    {
-    
-        var ctx = canvas.getContext('2d');
-        ctx.fillStyle = "#ddd";
+        
+        ctx = canvas.getContext('2d');
+        ctx.fillStyle = "#aaa";
         ctx.fillRect(0,0, width, height);
-        
+    
         var yPos=0,xPos;
-        
-        var tileHeight = Math.round(tileSize * 171 / 101);
-        
         for (var y=0; y < TILE_ROWS; y++)
         {
             xPos =0;
             for (var x=0; x < TILES_PER_ROW; x++)
             {
-                var off = tileOffset(x,y);
-                var block = level[off];
-                if (block != null)
-                {
-                    ctx.drawImage($sheet[0], (block & 7) * 101, Math.floor(block / 8) * 171, 101, 171, xPos, yPos, tileSize, tileHeight);
-                }
-                
-                var shadows = shadowsMap[off];
-                for (var i=0, len = shadows.length; i < len; i++)
-                {
-                    var block = shadows[i];
-                    if (block != null)
-                    {
-                        ctx.drawImage($sheet[0], (block & 7) * 101, Math.floor(block / 8) * 171, 101, 171, xPos, yPos, tileSize, tileHeight + 2);
-                    }
-                }
-
-                xPos += tileSize;
+                drawBlocks(x,y, xPos, yPos);
+                xPos += backgroundSet.scaledTileWidth;
             }
-            yPos += tileSize * (139/171);
+            yPos += tileStep;
         }
-
+    
+        levelImageData = ctx.getImageData(0,0,width,height);
+    
+        Application.mainLoop();
+    },
+    
+mainLoop:
+    function()
+    {
         window.setTimeout( Application.mainLoop, 20);
     },
 onOpen:
@@ -411,4 +418,4 @@ function send(outgoing) {
 $(this.Application.init);
  
 
-})(jQuery);
+//})(jQuery);
