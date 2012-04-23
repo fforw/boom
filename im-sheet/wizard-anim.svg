@@ -14,10 +14,10 @@
    id="svg2"
    version="1.1"
    inkscape:version="0.48.2 r9819"
-   inkscape:export-filename="/var/www/test/walk-anim.png"
-   inkscape:export-xdpi="180"
-   inkscape:export-ydpi="180"
-   sodipodi:docname="walk3.svg">
+   inkscape:export-filename="/home/sven/workspace/boom/src/main/webapp/image/wizard-anim.png"
+   inkscape:export-xdpi="90"
+   inkscape:export-ydpi="90"
+   sodipodi:docname="wizard-anim.svg">
   <defs
      id="defs4">
     <filter
@@ -1259,11 +1259,11 @@
      pagecolor="#ffffff"
      bordercolor="#666666"
      borderopacity="1.0"
-     inkscape:pageopacity="0.0"
+     inkscape:pageopacity="0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.009647"
      inkscape:cx="303.47364"
-     inkscape:cy="356.46904"
+     inkscape:cy="277.23342"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
