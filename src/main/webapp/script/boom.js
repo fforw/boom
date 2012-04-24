@@ -23,8 +23,9 @@ var shadowsMap = [];
 var levelImageData = null;
 
 var ws;
-var canvas,ctx,tileStep,ratio, width, height;
+var canvas,ctx,tileStep, width, height;
 
+var control;
 
 var TILES_PER_ROW = 21;
 var TILE_ROWS = 19;
@@ -132,19 +133,7 @@ function blockHeight(block)
     }
 }
 
-function getScaleRatio(w,h)
-{
-    console.debug("%s x %s",w,h);
     
-    var ow = 101 * TILES_PER_ROW;
-    var oh = 81 * (TILE_ROWS) + 171;
-    console.debug("fullsize = %s x %s",ow,oh);
-    
-    var wRatio = w / ow;
-    var hRatio = h / oh;
-    
-    return Math.min(wRatio, hRatio);
-}
 
 function setBlock(x,y,block)
 {
@@ -296,16 +285,20 @@ onLoad:
     function(images)
     {
         var $window = $(window);
-        ratio = getScaleRatio($window.width() - 1, $window.height() - 35);
         
-        console.debug("ratio = %s", ratio);
+        var scaledToWidth = ($window.width() - 1) / (101 * TILES_PER_ROW);
+        var scaledToHeight = ($window.height() - 35) / (79 * (TILE_ROWS) + 171);
         
-        backgroundSet = new TileSet(images[0], 101, 171, ratio);
-        wizardSet = new TileSet(images[1], 101, 171, ratio);
+        var scale = Math.min(scaledToWidth, scaledToHeight);
+
+        console.debug("scale = %s", scale);
+        
+        backgroundSet = new TileSet(images[0], 101, 171, scale);
+        wizardSet = new TileSet(images[1], 101, 171, scale);
         
         console.debug(backgroundSet);
         
-        tileStep = Math.floor(81 * ratio);
+        tileStep = 79 * scale;
         
         width = backgroundSet.scaledTileWidth * TILES_PER_ROW;
         height = (tileStep * TILE_ROWS) + backgroundSet.scaledTileWidth;
@@ -359,7 +352,6 @@ onLoad:
             }
         }
         
-        
         ctx = canvas.getContext('2d');
         ctx.fillStyle = "#aaa";
         ctx.fillRect(0,0, width, height);
@@ -378,6 +370,14 @@ onLoad:
     
         levelImageData = ctx.getImageData(0,0,width,height);
     
+        new Player(new KeyBasedControl({
+            CONTROL_ATTACK : 32, 
+            CONTROL_UP : 38, 
+            CONTROL_DOWN : 39, 
+            CONTROL_LEFT : 37, 
+            CONTROL_RIGHT : 40 
+        }), wizardSet, 0,0);
+        
         Application.mainLoop();
     },
     
