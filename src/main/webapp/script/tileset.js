@@ -6,13 +6,14 @@ init:
         console.debug("$image = %x", $image, $image.width(), $image.height());
     
         this.$image = $image;
-        this.tileWidth = tileWidth;
-        this.tileHeight = tileHeight;
-        this.scaledTileWidth = Math.floor(this.tileWidth * scale);
-        this.scaledTileHeight = Math.floor(this.tileHeight * scale);
+        this.originalTileWidth = tileWidth;
+        this.originaltileHeight = tileHeight;
+        this.tileWidth = Math.floor(this.originalTileWidth * scale);
+        this.tileHeight = Math.floor(this.originaltileHeight * scale);
+        this.scale = scale;
         
-        this.tilesPerRow = Math.floor($image[0].width / this.tileWidth); 
-        this.rows = Math.floor($image[0].height / this.tileHeight); 
+        this.tilesPerRow = Math.floor($image[0].width / this.originalTileWidth); 
+        this.rows = Math.floor($image[0].height / this.originaltileHeight); 
     },
 draw:
     function(ctx,block,x,y)
@@ -20,10 +21,10 @@ draw:
         var tileY = Math.floor(block / this.tilesPerRow);
         var tileX = block % this.tilesPerRow;
     
-        var tw = this.tileWidth;
-        var th = this.tileHeight;
+        var tw = this.originalTileWidth;
+        var th = this.originaltileHeight;
         
-        ctx.drawImage(this.$image[0], tileX * tw, tileY * th, tw, th, x, y, this.scaledTileWidth, this.scaledTileHeight);
+        ctx.drawImage(this.$image[0], tileX * tw, tileY * th, tw, th, x, y, this.tileWidth, this.tileHeight);
     }
 });    
     

@@ -41,16 +41,21 @@ function registerEvents()
 
 this.KeyBasedControl = Class.extend({
 init:
-    function(keyCodes)
+    function(config)
     {
-        this.keyCodes = keyCodes;
+        this.keyCodes = {};
+        for (var k in config)
+        {
+            this.keyCodes[config[k]] = window[k];
+        }
+        
         controls.push(this);
         registerEvents();
     },
 onKey:
     function(ev)
     {
-        var action = keyCodes[ev.keyCode];
+        var action = this.keyCodes[ev.keyCode];
         
         if (action)
         {

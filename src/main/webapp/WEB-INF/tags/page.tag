@@ -15,8 +15,8 @@
 <script src="../../script/mainloop.js"></script>
 <script src="../../script/loader.js"></script>
 <script src="../../script/Class.js"></script>
-<script src="../../script/Player.js"></script>
 <script src="../../script/control.js"></script>
+<script src="../../script/Player.js"></script>
 <script src="../../script/tileset.js"></script>
 <script src="../../script/blocks.js"></script>
 <script src="../../script/boom.js"></script>

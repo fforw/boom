@@ -25,7 +25,7 @@ var levelImageData = null;
 var ws;
 var canvas,ctx,tileStep, width, height;
 
-var control;
+var player;
 
 var TILES_PER_ROW = 21;
 var TILE_ROWS = 19;
@@ -263,6 +263,8 @@ function drawBlocks(tileX,tileY, x,y)
 
 var backgroundSet = null;
 
+var lastLoopTime;
+
 this.Application = {
 init:
     function()
@@ -300,8 +302,8 @@ onLoad:
         
         tileStep = 79 * scale;
         
-        width = backgroundSet.scaledTileWidth * TILES_PER_ROW;
-        height = (tileStep * TILE_ROWS) + backgroundSet.scaledTileWidth;
+        width = backgroundSet.tileWidth * TILES_PER_ROW;
+        height = (tileStep * TILE_ROWS) + backgroundSet.tileWidth;
         
         var x = 0;
         var y = 0;
@@ -352,38 +354,58 @@ onLoad:
             }
         }
         
-        ctx = canvas.getContext('2d');
-        ctx.fillStyle = "#aaa";
-        ctx.fillRect(0,0, width, height);
     
-        var yPos=0,xPos;
-        for (var y=0; y < TILE_ROWS; y++)
-        {
-            xPos =0;
-            for (var x=0; x < TILES_PER_ROW; x++)
-            {
-                drawBlocks(x,y, xPos, yPos);
-                xPos += backgroundSet.scaledTileWidth;
-            }
-            yPos += tileStep;
-        }
-    
-        levelImageData = ctx.getImageData(0,0,width,height);
-    
-        new Player(new KeyBasedControl({
+        
+        player = new Player(new KeyBasedControl({
             CONTROL_ATTACK : 32, 
             CONTROL_UP : 38, 
             CONTROL_DOWN : 39, 
             CONTROL_LEFT : 37, 
             CONTROL_RIGHT : 40 
         }), wizardSet, 0,0);
+    
+        player = new Player(new KeyBasedControl({
+            CONTROL_ATTACK : 32, 
+            CONTROL_UP : 38, 
+            CONTROL_DOWN : 40, 
+            CONTROL_LEFT : 37, 
+            CONTROL_RIGHT : 39  
+        }), wizardSet, 0,0);
         
+        
+        var yPos=0,xPos;
+        
+        for (var y=0; y < TILE_ROWS; y++)
+        {
+            xPos =0;
+            for (var x=0; x < TILES_PER_ROW; x++)
+            {
+                drawBlocks(x,y, xPos, yPos);
+                xPos += backgroundSet.tileWidth;
+            }
+            yPos += tileStep;
+        }
+        
+        lastLoopTime = new Date().getTime() - 1;
         Application.mainLoop();
     },
     
 mainLoop:
     function()
     {
+        var now = new Date().getTime();
+        var delta = now - lastLoopTime;
+        lastLoopTime = now;
+
+        var px = player.x / wizardSet.tileWidth;
+        var py = player.y / wizardSet.tileHeight;
+        
+        drawBlocks(x,y)
+        
+        player.move(delta);
+        player.draw(ctx);
+
+    
         window.setTimeout( Application.mainLoop, 20);
     },
 onOpen:
