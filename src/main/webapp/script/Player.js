@@ -18,9 +18,13 @@ init:
         this.action = 0;
         this.dir = directions[CONTROL_RIGHT];
         this.walk = false;
+
+        this.tmp = document.createElement("canvas");
+        this.tmp.width = tileSet.tileWidth;
+        this.tmp.height = tileSet.tileHeight;
     },
 move:    
-    function(delta)
+    function(delta, fnValidate)
     {
         var newAction = this.control.action;
         
@@ -44,23 +48,30 @@ move:
         
         if (this.walk)
         {
-            var speed = 15 / 80 * this.tileSet.scale;
+            var speed = (this.dir.dx != 0 ? 15 : 12) / 80 * this.tileSet.scale;
+
+            var deltaX = this.dir.dx * delta * speed;
+            var deltaY = this.dir.dy * delta * speed;
             
-            this.x += this.dir.dx * delta * speed;
-            this.y += this.dir.dy * delta * speed;
-            
-            this.animStep += 1 / 80 * delta; 
-            while (this.animStep >= 8)
+            if (fnValidate(this.x,this.y,deltaX,deltaY))
             {
-                this.animStep -= 8; 
+                this.x += deltaX;
+                this.y += deltaY;
             }
-        }
             
+            this.animStep = (this.animStep  + (1 / 80 * delta)) % 8; 
+        }
+        
+    },
+currentBlock:
+    function()
+    {
+       return this.dir.bank * 8 + Math.floor(this.animStep);
     },
 draw:    
     function(ctx)
     {
-        this.tileSet.draw(ctx, this.dir.bank * 8 + Math.round(this.animStep), Math.round(this.x), Math.round(this.y) );
+        this.tileSet.draw(ctx, this.currentBlock(), 0, 0);//Math.round(this.x), Math.round(this.y) );
     }
 });
 //})(jQuery);
