@@ -33,6 +33,11 @@ init:
 draw:
     function(ctx,block,x,y)
     {
+        if (this.emptyBlock === block)
+        {
+            return;
+        }
+    
         var tileY = Math.floor(block / this.tilesPerRow);
         var tileX = block % this.tilesPerRow;
         
@@ -41,7 +46,7 @@ draw:
         
         var tx = tileX * tw;
         var ty = tileY * th;
-
+        
         ctx.drawImage(this.canvas, tx, ty, tw, th, x, y, tw, th);
     }
 });    

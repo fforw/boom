@@ -7,6 +7,8 @@ directions[CONTROL_DOWN] = {dx: 0, dy:  1,bank: 2};
 directions[CONTROL_LEFT] = {dx: -1, dy: 0, bank: 1};
 directions[CONTROL_RIGHT] = {dx: 1, dy:  0, bank: 0};
 
+var DIR_MASK = CONTROL_UP | CONTROL_DOWN | CONTROL_LEFT | CONTROL_RIGHT;
+
 this.Player = Class.extend({
 init:
     function(control, tileSet, x, y)
@@ -22,6 +24,8 @@ init:
         this.tmp = document.createElement("canvas");
         this.tmp.width = tileSet.tileWidth;
         this.tmp.height = tileSet.tileHeight;
+        
+        this.attackReleased = true;
     },
 move:    
     function(delta, fnValidate)
@@ -34,10 +38,32 @@ move:
             
             if (newAction)
             {
-                this.animStep = Math.random() > 0.5 ? 3 : 7;
+                if (newAction & DIR_MASK)
+                {
+                    this.animStep = Math.random() > 0.5 ? 3 : 7;
+                    
+                    this.dir = directions[newAction & DIR_MASK] || this.dir;
+                    this.walk = true;
+                }
                 
-                this.dir = directions[newAction] || this.dir;
-                this.walk = true;
+                if (newAction & CONTROL_ATTACK)
+                {
+                    if (this.attackReleased)
+                    {
+                        var scale = this.tileSet.scale;
+                        var tw = this.tileSet.tileWidth;
+                        
+                        var tx = Math.floor((this.x + tw / 2) / tw) * tw;
+                        var ty = Math.floor(this.y / Application.yStep) * Application.yStep;
+                        
+                        new Spell(Math.floor(tx + 20 * scale), Math.floor(ty + 150 * scale));
+                        this.attackReleased = false;
+                    }
+                }
+                else
+                {
+                    this.attackReleased = true;
+                }
             }
             else
             {

@@ -17,6 +17,8 @@
 //    }
 //}
 
+var gameObjects = [];
+
 var wizardAABB = [
     {"maxY":154,"maxX":95,"minX":23,"minY":15},{"maxY":154,"maxX":98,"minX":22,"minY":22},{"maxY":153,"maxX":95,"minX":26,"minY":15},
     {"maxY":154,"maxX":93,"minX":27,"minY":10},{"maxY":154,"maxX":96,"minX":26,"minY":13},{"maxY":154,"maxX":98,"minX":25,"minY":19},
@@ -30,22 +32,31 @@ var wizardAABB = [
     {"maxY":163,"maxX":93,"minX":29,"minY":26},{"maxY":163,"maxX":96,"minX":28,"minY":36},{"maxY":163,"maxX":98,"minX":29,"minY":42},
     {"maxY":162,"maxX":95,"minX":29,"minY":32},{"maxY":163,"maxX":96,"minX":30,"minY":26}];
 
+var TILES_PER_ROW = 21;
+var TILE_ROWS = 19;
+
+var YSTEP = 79; 
+
 var level = [];
+
+for (var i=0, len = TILES_PER_ROW * TILE_ROWS; i < len ; i++)
+{
+    level[i] = 0;
+}
+
 var heightMap = [];
 var shadowsMap = [];
 var levelImageData = null;
 var copy = null;
 var tmp = null;
 
+var spellFrames;
+
+
 var ws;
 var canvas,ctx, width, height,yStep,yCorrect;
 
 var player;
-
-var TILES_PER_ROW = 21;
-var TILE_ROWS = 19;
-
-var YSTEP = 79; 
 
 function tileOffset(x,y)
 {
@@ -155,7 +166,7 @@ function blockHeight(block)
 function setBlock(x,y,block)
 {
     var off = tileOffset(x,y);
-    level[off] = block;
+    level[off] = block || BLOCK_EMPTY;
     
     heightMap[off] = blockHeight(block);
 }
@@ -339,6 +350,14 @@ function validatePlayer(x,y,dx,dy)
     return !block || block == BLOCK_PAD;
 }
 
+
+function onSpellIgnite(ev, gameObject)
+{
+    console.info("%o destroyed", gameObject);
+    
+    gameObjects.splice(gameObject.index,1);
+}
+
 this.Application = {
 init:
     function()
@@ -355,6 +374,10 @@ init:
         var $canvas = $("#teh_canvas");
         canvas = $canvas[0];
 
+        Spell.prototype.createFrames();
+        
+        $(document).bind("spellIgnite", onSpellIgnite);
+        
         Loader.load(["../../image/sheet.png","../../image/wizard-anim.png"], Application.onLoad);
     },
 onLoad:
@@ -366,16 +389,19 @@ onLoad:
         var scaledToHeight = ($window.height() - 38) / (YSTEP * (TILE_ROWS - 1) + 171);
         
         var scale = Math.min(scaledToWidth, scaledToHeight);
-
-        console.debug("scale = %s", scale);
         
+        Application.scale = scale;
+
         backgroundSet = new TileSet(images[0], 101, 171, scale);
+        backgroundSet.emptyBlock = BLOCK_EMPTY;
         wizardSet = new TileSet(images[1], 101, 171, scale);
         wizardSet.aabb = wizardAABB;
         
         console.debug(backgroundSet);
         
         yStep = Math.floor(YSTEP * scale);
+        
+        Application.yStep = yStep;
         
         width = backgroundSet.tileWidth * TILES_PER_ROW;
         height = (yStep * (TILE_ROWS - 1)) + backgroundSet.tileHeight;
@@ -478,16 +504,28 @@ onLoad:
         lastLoopTime = new Date().getTime() - 1;
         Application.mainLoop();
     },
-    
+register:
+    function(gameObject)
+    {
+        gameObject.index = gameObjects.length;
+        gameObjects.push(gameObject);
+        
+    },
 mainLoop:
     function()
     {
         var now = new Date().getTime();
         var delta = now - lastLoopTime;
         lastLoopTime = now;
-
+        
         restorePlayer(player);
 
+        for (var i=0, len = gameObjects.length; i < len; i++)
+        {
+            var go = gameObjects[i]; 
+            go.draw(ctx,delta);
+        }
+        
         var tw = backgroundSet.tileWidth;
         var th = backgroundSet.tileHeight;
         
@@ -497,16 +535,15 @@ mainLoop:
         var tileY = Math.floor((player.y + yCorrect)/ yStep) + 1 ;
         
         var tmpCtx = tmp.getContext("2d");
-        tmpCtx.fillStyle = "rgba(1,1,1,0);";
-        tmpCtx.fillRect(0,0, tw,th); 
+        tmpCtx.clearRect(0,0, tw,th); 
         
         tmpCtx.globalCompositeOperation = "source-over";
         player.draw(tmpCtx);
         tmpCtx.globalCompositeOperation = "destination-out";
         
         var block = level[tileY * TILES_PER_ROW + tileX];
-        var offsetX = player.x - (tileX * tw); 
-        var offsetY = player.y - (tileY * yStep); 
+        var offsetX = Math.round(player.x - (tileX * tw)); 
+        var offsetY = Math.round(player.y - (tileY * yStep)); 
         backgroundSet.draw(tmpCtx, block, -offsetX, -offsetY);
 
         if (tileX < TILES_PER_ROW - 1)

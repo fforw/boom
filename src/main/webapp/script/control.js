@@ -27,7 +27,7 @@ function onKey(ev)
 
 function combineActions(oldAction,action)
 {
-    return (action & CONTROL_EXCLUSIVE_MASK ? this.action & ~CONTROL_EXCLUSIVE_MASK : this.action) | action;
+    return (action & CONTROL_EXCLUSIVE_MASK ? oldAction & ~CONTROL_EXCLUSIVE_MASK : oldAction) | action;
 }
 
 function registerEvents()
