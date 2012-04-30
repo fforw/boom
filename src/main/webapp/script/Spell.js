@@ -12,8 +12,8 @@ this.Spell = Class.extend({
             this.x = x;
             this.y = y;
             this.delay = delay || 2000;
-            this.strength = strength || 1000;
-            this.step = 0;
+            this.strength = strength || 2;
+            this.step = Math.floor(Math.random() * spellFrames.length);
             
             this.birth = new Date().getTime();
             this.time = this.birth;
@@ -23,9 +23,46 @@ this.Spell = Class.extend({
     draw:
         function(ctx, delta)
         {
-            var scale = Math.floor(Application.scale * 64);
-        
+            var appScale = Application.scale;
+            var tw = backgroundSet.tileWidth;
+            var yStep = YSTEP * appScale;
+            var blast = this.blast;
+            if (blast)
+            {
+                var h = yStep * blast.bu;
+                var hScale = Math.floor(h);
+                var scale = Math.floor(appScale * 64 );
+                ctx.drawImage(spellFrames[this.step], 0, 0, 64, 64, this.x, this.y - h + yStep , scale, hScale);
+                
+                h = yStep * blast.bd;
+                var hScale = Math.floor(h);
+                var scale = Math.floor(appScale * 64 );
+                ctx.drawImage(spellFrames[this.step], 0, 0, 64, 64, this.x, this.y, scale, hScale);
+                
+                var w = tw * blast.bl;
+                var wScale = Math.floor(w);
+                var scale = Math.floor(appScale * 64 );
+                ctx.drawImage(spellFrames[this.step], 0, 0, 64, 64, this.x - w + tw, this.y , wScale, scale);
+
+                w = tw * blast.br;
+                var wScale = Math.floor(w);
+                var scale = Math.floor(appScale * 64 );
+                ctx.drawImage(spellFrames[this.step], 0, 0, 64, 64, this.x, this.y, wScale, scale);
+            }
+            else
+            {
+                if (this.time - this.birth > this.delay)
+                {
+                    this.ignite();
+                }
+                
+            }
+            var scale = Math.floor(appScale * 64);
             ctx.drawImage(spellFrames[this.step], 0, 0, 64, 64, this.x, this.y, scale, scale);
+            
+            this.time += delta;
+            
+            
             
             this.step++;
             var len = spellFrames.length;
@@ -33,14 +70,6 @@ this.Spell = Class.extend({
             {
                 this.step -= len;
             }
-
-            this.time += delta;
-            
-            if (this.time - this.birth > this.delay)
-            {
-                this.ignite();
-            }
-            
         },
     createFrames:
         function()

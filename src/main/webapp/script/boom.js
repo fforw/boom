@@ -1,6 +1,6 @@
-
 //(function($){
 
+console.debug("start");
 
 // Perform login: Ask user for name, and send message to socket.
 //function login() {
@@ -145,23 +145,36 @@ function getShadowTilesAt(x,y)
 }
 
 
-function blockHeight(block)
+var _proofTab = [];
+_proofTab[BLOCK_STONE_BLOCK_TALL] = true;
+_proofTab[BLOCK_STONE_BLOCK] = true;
+_proofTab[BLOCK_WALL_BLOCK_TALL] = true;
+_proofTab[BLOCK_WALL_BLOCK] = true;
+
+function blastProof(block)
 {
-    if (block == BLOCK_EMPTY || block == BLOCK_ROCK || block == BLOCK_TREE_UGLY  || block == BLOCK_TREE_SHORT || block == BLOCK_TREE_TALL || block == BLOCK_PAD)
-    {
-        return 0;
-    }
-    else if (block  == BLOCK_STONE_BLOCK_TALL || block == BLOCK_WALL_BLOCK_TALL || block == BLOCK_WINDOW_TALL)
-    {
-        return 2;
-    }
-    else 
-    {
-        return 1;
-    }
+    return !!_proofTab[block];
 }
 
-    
+var _heightTab = [];
+
+_heightTab[BLOCK_EMPTY] = 0;
+_heightTab[BLOCK_TREE_UGLY] = 0;
+_heightTab[BLOCK_TREE_SHORT] = 0;
+_heightTab[BLOCK_TREE_TALL] = 0;
+_heightTab[BLOCK_PAD] = 0;
+
+_heightTab[BLOCK_STONE_BLOCK_TALL] = 2;
+_heightTab[BLOCK_WALL_BLOCK_TALL] = 2;
+_heightTab[BLOCK_WALL_BLOCK_TALL] = 2;
+
+
+function blockHeight(block)
+{
+    var h = _heightTab[block];
+    return h === undefined ? 1 : h;
+}
+
 
 function setBlock(x,y,block)
 {
@@ -350,12 +363,49 @@ function validatePlayer(x,y,dx,dy)
     return !block || block == BLOCK_PAD;
 }
 
+function blast(tx,ty,dx,dy,strength)
+{
+    var cnt = 0;
+    while (!blastProof(level[tileOffset(tx,ty)]) && strength-- >= 0)
+    {
+        cnt++;
+        tx += dx;
+        ty += dy;
+    }
+    
+    return cnt;
+}
+
 
 function onSpellIgnite(ev, gameObject)
+{
+    var tw = backgroundSet.tileWidth;
+
+    var tileX = Math.floor(gameObject.x / tw);
+    var tileY = Math.floor((gameObject.y + yCorrect)/ yStep) + 1;
+
+    var strength = gameObject.strength;
+    
+    console.debug("ignite gameObject = %o at %d,%d", gameObject, tileX, tileY);
+    
+    gameObject.blast = {
+        "bu": blast(tileX,tileY, 0,-1, strength),
+        "bd": blast(tileX,tileY, 0, 1, strength),
+        "bl": blast(tileX,tileY,-1, 0, strength),
+        "br": blast(tileX,tileY, 1, 0, strength)};
+
+}
+
+function onBlastEnd(ev, gameObject)
 {
     console.info("%o destroyed", gameObject);
     
     gameObjects.splice(gameObject.index,1);
+    
+    for (var i = 0, len = gameObjects.length; i < len; i++)
+    {
+        gameObjects[i].index = i;
+    }
 }
 
 this.Application = {
@@ -364,7 +414,6 @@ init:
     {
         var url = 'ws://boom.localhost:9876/appsocket';
 
-        console.debug(url);
         ws = new WebSocket(url);
         ws.onopen = Application.onOpen;
         ws.onclose = Application.disconnected;
@@ -509,7 +558,6 @@ register:
     {
         gameObject.index = gameObjects.length;
         gameObjects.push(gameObject);
-        
     },
 mainLoop:
     function()
@@ -551,7 +599,6 @@ mainLoop:
             var block = level[tileY * TILES_PER_ROW + tileX + 1];
             backgroundSet.draw(tmpCtx, block, -offsetX + tw, -offsetY);
         }
-           
         
         ctx.drawImage(tmp, player.x, player.y);
         
@@ -589,4 +636,5 @@ function send(outgoing) {
 $(this.Application.init);
  
 
+console.debug("end");
 //})(jQuery);
