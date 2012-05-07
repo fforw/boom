@@ -20,6 +20,8 @@ init:
         this.action = 0;
         this.dir = directions[CONTROL_RIGHT];
         this.walk = false;
+        
+        this.power = 2;
 
         this.tmp = document.createElement("canvas");
         this.tmp.width = tileSet.tileWidth;
@@ -50,13 +52,7 @@ move:
                 {
                     if (this.attackReleased)
                     {
-                        var scale = this.tileSet.scale;
-                        var tw = this.tileSet.tileWidth;
-                        
-                        var tx = Math.floor((this.x + tw / 2) / tw) * tw;
-                        var ty = Math.floor(this.y / Application.yStep) * Application.yStep;
-                        
-                        new Spell(Math.floor(tx + 20 * scale), Math.floor(ty + 150 * scale));
+                        triggerGameEvent("spellCast", { x: this.x, y: this.y, power: this.power });
                         this.attackReleased = false;
                     }
                 }

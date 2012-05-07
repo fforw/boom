@@ -1,42 +1,10 @@
-//(function($){
-
-console.debug("start");
-
-// Perform login: Ask user for name, and send message to socket.
-//function login() {
-//    var defaultUsername = (window.localStorage && window.localStorage.username) || 'yourname';
-//    var username = prompt('Choose a username', defaultUsername);
-//    if (username) {
-//        if (window.localStorage) { // store in browser localStorage, so we remember next next
-//            window.localStorage.username = username;
-//        }
-//        send({action:'LOGIN', loginUsername:username});
-//        document.getElementById('entry').focus();
-//    } else {
-//        ws.close();
-//    }
-//}
-
-var gameObjects = [];
-
-var wizardAABB = [
-    {"maxY":154,"maxX":95,"minX":23,"minY":15},{"maxY":154,"maxX":98,"minX":22,"minY":22},{"maxY":153,"maxX":95,"minX":26,"minY":15},
-    {"maxY":154,"maxX":93,"minX":27,"minY":10},{"maxY":154,"maxX":96,"minX":26,"minY":13},{"maxY":154,"maxX":98,"minX":25,"minY":19},
-    {"maxY":153,"maxX":95,"minX":26,"minY":11},{"maxY":154,"maxX":96,"minX":26,"minY":8},{"maxY":157,"maxX":95,"minX":19,"minY":18},
-    {"maxY":157,"maxX":98,"minX":14,"minY":25},{"maxY":156,"maxX":95,"minX":22,"minY":18},{"maxY":157,"maxX":93,"minX":19,"minY":13},
-    {"maxY":157,"maxX":96,"minX":18,"minY":15},{"maxY":157,"maxX":98,"minX":16,"minY":21},{"maxY":156,"maxX":95,"minX":22,"minY":15},
-    {"maxY":157,"maxX":96,"minX":19,"minY":11},{"maxY":160,"maxX":95,"minX":24,"minY":30},{"maxY":160,"maxX":98,"minX":27,"minY":36},
-    {"maxY":159,"maxX":95,"minX":26,"minY":25},{"maxY":160,"maxX":93,"minX":26,"minY":19},{"maxY":160,"maxX":96,"minX":26,"minY":30},
-    {"maxY":160,"maxX":98,"minX":27,"minY":36},{"maxY":159,"maxX":95,"minX":26,"minY":25},{"maxY":160,"maxX":96,"minX":27,"minY":19},
-    {"maxY":163,"maxX":95,"minX":29,"minY":36},{"maxY":163,"maxX":98,"minX":30,"minY":42},{"maxY":162,"maxX":95,"minX":30,"minY":32},
-    {"maxY":163,"maxX":93,"minX":29,"minY":26},{"maxY":163,"maxX":96,"minX":28,"minY":36},{"maxY":163,"maxX":98,"minX":29,"minY":42},
-    {"maxY":162,"maxX":95,"minX":29,"minY":32},{"maxY":163,"maxX":96,"minX":30,"minY":26}];
-
 var TILES_PER_ROW = 21;
 var TILE_ROWS = 19;
-
 var YSTEP = 79; 
 
+var UPDATE_ROWS_PER_FRAME = 4;
+
+var gameObjects = [];
 var level = [];
 
 for (var i=0, len = TILES_PER_ROW * TILE_ROWS; i < len ; i++)
@@ -48,7 +16,11 @@ var heightMap = [];
 var shadowsMap = [];
 var levelImageData = null;
 var copy = null;
+var copy2 = null;
+var copyCtx = null;
 var tmp = null;
+var updateCounter = 0 ;
+var updatedUntil = updateCounter;
 
 var spellFrames;
 
@@ -58,153 +30,11 @@ var canvas,ctx, width, height,yStep,yCorrect;
 
 var player;
 
-function tileOffset(x,y)
-{
-    return y * TILES_PER_ROW + x;
-}
-
-function getShadowTilesAt(x,y)
-{
-    var l = [];
-    
-    var off = tileOffset(x, y);
-    
-    var hTopLeft = 0;
-    var hLeft = 0;
-    var hBottomLeft = 0;
-    var hTopRight = 0;
-    var hRight = 0;
-    var hBottomRight = 0;
-    
-    var hMid = heightMap[off];
-    var hTop    = y > 0  ? heightMap[off - TILES_PER_ROW] : 0;
-    var hBottom = y < 15 ? heightMap[off + TILES_PER_ROW] : 0;
-    
-    if (x > 0)
-    {
-        hTopLeft    =  y >  0 ? heightMap[off - TILES_PER_ROW - 1] : 0;
-        hBottomLeft =  y < 15 ? heightMap[off + TILES_PER_ROW - 1] : 0;
-        hLeft = heightMap[off - 1];
-    }
-
-    if (x < 15)
-    {
-        hTopRight    =  y >  0 ? heightMap[ off - TILES_PER_ROW + 1] : 0;
-        hBottomRight =  y < 15 ? heightMap[ off + TILES_PER_ROW + 1] : 0;
-        hRight =  heightMap[off + 1];
-    }
-    
-    if (hBottomRight > hMid && hRight < hMid)
-    {
-        l.push(BLOCK_SHADOW_SOUTH_EAST);
-    }
-    
-    if (hBottom > hMid && hBottom == 2)
-    {
-        l.push(BLOCK_SHADOW_SOUTH);
-    }
-    
-    if (hBottomLeft > hMid && hLeft < hMid)
-    {
-        l.push(BLOCK_SHADOW_SOUTH_WEST);
-    }
-
-    if (hRight > hMid)
-    {
-        l.push(BLOCK_SHADOW_EAST);
-    }
-
-    if (hLeft > hMid)
-    {
-        l.push(BLOCK_SHADOW_WEST);
-    }
-    
-    if (hTopRight > hMid && hTop <= hMid && hRight <= hMid)
-    {
-        l.push(BLOCK_SHADOW_NORTH_EAST);
-    }
-    
-    if (hTop > hMid)
-    {
-        l.push(BLOCK_SHADOW_NORTH);
-    }
-
-    if (hTopLeft > hMid && hTop <= hMid && hLeft <= hMid)
-    {
-        l.push(BLOCK_SHADOW_NORTH_WEST);
-    }
-    
-    if (hBottomLeft == hMid && hBottom < hMid)
-    {
-        l.push(BLOCK_SHADOW_SIDE_WEST);
-    }
-    
-    //console.debug("shadows for %d,%d = %o", x,y, l);
-    
-    return l;
-}
-
-
-var _proofTab = [];
-_proofTab[BLOCK_STONE_BLOCK_TALL] = true;
-_proofTab[BLOCK_STONE_BLOCK] = true;
-_proofTab[BLOCK_WALL_BLOCK_TALL] = true;
-_proofTab[BLOCK_WALL_BLOCK] = true;
-
-function blastProof(block)
-{
-    return !!_proofTab[block];
-}
-
-var _heightTab = [];
-
-_heightTab[BLOCK_EMPTY] = 0;
-_heightTab[BLOCK_TREE_UGLY] = 0;
-_heightTab[BLOCK_TREE_SHORT] = 0;
-_heightTab[BLOCK_TREE_TALL] = 0;
-_heightTab[BLOCK_PAD] = 0;
-
-_heightTab[BLOCK_STONE_BLOCK_TALL] = 2;
-_heightTab[BLOCK_WALL_BLOCK_TALL] = 2;
-_heightTab[BLOCK_WALL_BLOCK_TALL] = 2;
-
-
-function blockHeight(block)
-{
-    var h = _heightTab[block];
-    return h === undefined ? 1 : h;
-}
-
-
-function setBlock(x,y,block)
-{
-    var off = tileOffset(x,y);
-    level[off] = block || BLOCK_EMPTY;
-    
-    heightMap[off] = blockHeight(block);
-}
-
-function gap(opt)
-{
-    return opt ? Math.random() < 0.9 : true;
-}
+var obstacles = [ BLOCK_ROCK, BLOCK_TREE_TALL, BLOCK_TREE_SHORT, BLOCK_DIRT_BLOCK, BLOCK_GRASS_BLOCK, BLOCK_DIRT_BLOCK, BLOCK_GRASS_BLOCK];
 
 function obstacle()
 {
-    var v = Math.random();
-    if (v < 0.333)
-    {
-        return BLOCK_ROCK;
-    }
-    else if (v < 0.666)
-    {
-        return BLOCK_TREE_TALL;
-    }
-    else 
-    {
-        return BLOCK_TREE_SHORT;
-    }
-    
+    return obstacles[Math.round( v = Math.random() * obstacles.length)];
 }
 
 function drawSquare(sx ,sy, w, h, block, randomGap)
@@ -280,8 +110,9 @@ function drawSquare(sx ,sy, w, h, block, randomGap)
     }
 }
 
+var debugColors = ["#f00","#0f0","#00f", "#ccc"];
 
-function drawBlocks(tileX,tileY, x,y)
+function drawBlocks(ctx,tileX,tileY, x,y)
 {
     if (tileX < 0 || tileY < 0)
     {
@@ -296,6 +127,7 @@ function drawBlocks(tileX,tileY, x,y)
         backgroundSet.draw(ctx,block,x,y);
     }
     
+    
     var shadows = shadowsMap[off];
     
     for (var i=0, len = shadows.length; i < len; i++)
@@ -305,7 +137,24 @@ function drawBlocks(tileX,tileY, x,y)
         {
             backgroundSet.draw(ctx,block,x,y);
         }
-    }
+}
+
+//    if (DEBUG)
+//    {
+//        var tw = backgroundSet.tileWidth;
+//        var th = backgroundSet.tileHeight;
+//        
+//        if (tileX & 1)
+//        {
+//            ctx.strokeStyle = debugColors[tileY & 3];
+//            ctx.globalAlpha = 0.1;
+//            ctx.moveTo(x,y + th);
+//            ctx.lineTo(x,y);
+//            ctx.lineTo(x+tw,y);
+//            ctx.stroke();
+//            ctx.globalAlpha = 1;
+//        }
+//    }
 }
 
 var backgroundSet = null;
@@ -363,52 +212,255 @@ function validatePlayer(x,y,dx,dy)
     return !block || block == BLOCK_PAD;
 }
 
-function blast(tx,ty,dx,dy,strength)
+function getBlastInfo(tx,ty,dx,dy,strength)
 {
     var cnt = 0;
-    while (!blastProof(level[tileOffset(tx,ty)]) && strength-- >= 0)
+    var block = BLOCK_EMPTY;
+    
+    while ( strength > 0)
     {
+        block = level[ tileOffset(tx,ty)];
+        
+        if (block != BLOCK_EMPTY)
+        {
+            break;
+        }
+        
         cnt++;
         tx += dx;
         ty += dy;
+        strength--;
     }
     
-    return cnt;
+    var proof = blastProof(block);
+
+    var faded = strength == 0;
+    
+    if (block != BLOCK_EMPTY && proof && !faded)
+    {
+        cnt -= dx != 0 ? 1 : 0.5;
+    }
+    
+    var blast = { len: cnt, x: tx, y: ty, proof: proof, faded: faded};
+    //console.debug(blast);
+    return blast;
 }
 
+var blastDirections = {
+        "bu": {dx:  0, dy: -1},
+        "bd": {dx:  0, dy: 1},
+        "bl": {dx: -1, dy: 0},
+        "br": {dx:  1, dy: 0}
+    };
 
-function onSpellIgnite(ev, gameObject)
+var jobs = [];
+var fullUpdate = true;
+        
+function onSpellCast(ev, cast)
 {
+    var scale = backgroundSet.scale;
     var tw = backgroundSet.tileWidth;
-
-    var tileX = Math.floor(gameObject.x / tw);
-    var tileY = Math.floor((gameObject.y + yCorrect)/ yStep) + 1;
-
-    var strength = gameObject.strength;
     
-    console.debug("ignite gameObject = %o at %d,%d", gameObject, tileX, tileY);
-    
-    gameObject.blast = {
-        "bu": blast(tileX,tileY, 0,-1, strength),
-        "bd": blast(tileX,tileY, 0, 1, strength),
-        "bl": blast(tileX,tileY,-1, 0, strength),
-        "br": blast(tileX,tileY, 1, 0, strength)};
+    var tx = Math.floor((cast.x + tw / 2) / tw);
+    var ty = Math.floor(cast.y / yStep) + 1;
 
+    var blast = {};
+    for (var name in blastDirections)
+    {
+        var dir = blastDirections[name];
+        info = getBlastInfo( tx, ty, dir.dx, dir.dy, cast.power);
+        blast[name] = info;
+    }
+    
+    // x,y screen offset
+    var x = Math.floor(tx * tw + 20 * scale);
+    var y = Math.floor(ty * yStep + 80 * scale);
+
+    var size = Math.round(64*scale);
+    var halfSize = Math.round(32*scale);
+    
+    // xs,ys to xe,ye = the full maximum area of the blast
+    var xs = x - blast.bl.len * tw - halfSize;
+    var ys = y - blast.bu.len * yStep - halfSize;
+    var xe = x + blast.br.len * tw +  size + halfSize;
+    var ye = y + blast.bd.len * yStep + size + halfSize;
+    
+    var coveringBlocks = [];
+    for (var i = 1; i < blast.bl.len; i++)
+    {
+        var curTx = tx - i;
+        var curTy = ty + 1;
+        
+        var block = level[tileOffset(curTx,curTy)];
+        if (block != BLOCK_EMPTY)
+        {
+            coveringBlocks.push({tx: curTx, ty: curTy, block: block});
+        }
+    }
+
+    for (var i = 1; i < blast.br.len; i++)
+    {
+        var curTx = tx + i;
+        var curTy = ty + 1;
+        
+        var block = level[tileOffset(curTx,curTy)];
+        if (block != BLOCK_EMPTY)
+        {
+            coveringBlocks.push({tx: curTx, ty: curTy, block: block});
+        }
+    }
+    
+    if (!blast.bd.faded)
+    {
+        var curTy = Math.round(ty + blast.bd.len);
+        var block = level[tileOffset(tx,curTy)];
+        
+        if (block != BLOCK_EMPTY)
+        {
+            coveringBlocks.push({ tx: tx, ty: curTy, block: block});
+        }
+    }
+
+    var isUpdate = false;
+    for (var name in blastDirections)
+    {
+        info = blast[name];
+        
+        if (!info.faded && !info.proof)
+        {
+            setBlock(info.x,info.y, BLOCK_EMPTY);
+            updateCounter++;
+            isUpdate = true;
+        }
+    }
+    blast.updateCounter = updateCounter;
+
+    if (!isUpdate)
+    {
+        // lower update check counter to force update
+        updatedUntil--;
+    }
+    
+    var spell = new Spell( x - xs, y - ys, xs, ys, xe, ye, tx, ty, cast.power, scale, blast);
+    spell.coveringBlocks = coveringBlocks;
+    
+    console.debug("Spell on %s,%s. Covering Blocks = %o", tx,ty,coveringBlocks);
 }
 
-function onBlastEnd(ev, gameObject)
+function onSpellDestroy(ev, spell)
 {
-    console.info("%o destroyed", gameObject);
+    console.debug("onSpellDestroy, spell = %o", spell);
     
-    gameObjects.splice(gameObject.index,1);
+    var newJobs = [];
+    for (var i = 0, len = jobs.length; i < len; i++)
+    {
+        var job = jobs[i];
+        if (job.counter == spell.blast.updateCounter)
+        {
+            copy = job.buffer;
+            fullUpdate = true;
+        }
+        else
+        {
+            newJobs.push(jobs);
+        }
+    }
     
-    for (var i = 0, len = gameObjects.length; i < len; i++)
+    jobs = newJobs;
+
+    removeGameObject(spell);
+}
+
+function removeGameObject(gameObject)
+{
+    var idx = gameObject.index;
+    gameObjects.splice(idx,1);
+    
+    for (var i = idx, len = gameObjects.length; i < len; i++)
     {
         gameObjects[i].index = i;
     }
 }
 
-this.Application = {
+function drawLevel(ctx,minY,maxY)
+{
+    minY = minY || 0;
+    maxY = maxY || TILE_ROWS;
+
+    //console.debug("drawLevel %s to %s", minY, maxY);
+    
+    var xPos;
+    var yPos = minY * yStep;
+    var tw = backgroundSet.tileWidth;
+    for (var y = minY; y < maxY; y++)
+    {
+        xPos = 0;
+        for (var x=0; x < TILES_PER_ROW; x++)
+        {
+            drawBlocks( ctx, x, y, xPos, yPos);
+            xPos += tw;
+        }
+        yPos += yStep;
+    }
+    
+}
+
+function createBackBuffer()
+{
+    var buffer = document.createElement("canvas");
+    buffer.width = canvas.width;
+    buffer.height = canvas.height;
+    var bufferCtx = buffer.getContext('2d');
+    bufferCtx.fillStyle = "#aaa";
+    bufferCtx.fillRect(0,0, width, height);
+    
+    return buffer;
+}
+
+function initShadowsMap()
+{
+    var off = 0;
+    for (var y=0; y < TILE_ROWS; y++)
+    {
+        for (var x=0; x < TILES_PER_ROW; x++)
+        {
+            shadowsMap[off] = getShadowTilesAt(x,y);
+            off++;
+        }
+    }
+}
+
+var UpdateJob = Class.extend({
+init:
+    function(ctx, counter, buffer)
+    {
+        this.buffer = buffer;
+        this.counter = counter;
+        this.pos = 0;
+        this.done = false;
+        this.ctx = ctx;
+    },
+run:
+    function()
+    {
+        if (this.pos < TILE_ROWS)
+        {
+            var ctx = this.buffer.getContext("2d");
+            
+            var start = this.pos;
+            var end = this.pos + UPDATE_ROWS_PER_FRAME;
+            if (end >= TILE_ROWS)
+            {
+                end = TILE_ROWS;
+            }
+            
+            drawLevel(ctx, start, end );
+            this.pos = end;
+        }
+    }
+});
+
+var Application = {
 init:
     function()
     {
@@ -425,7 +477,8 @@ init:
 
         Spell.prototype.createFrames();
         
-        $(document).bind("spellIgnite", onSpellIgnite);
+        $doc.bind("spellCast", onSpellCast)
+            .bind("spellDestroy", onSpellDestroy);
         
         Loader.load(["../../image/sheet.png","../../image/wizard-anim.png"], Application.onLoad);
     },
@@ -435,7 +488,7 @@ onLoad:
         var $window = $(window);
         
         var scaledToWidth = ($window.width() - 1) / (101 * TILES_PER_ROW);
-        var scaledToHeight = ($window.height() - 38) / (YSTEP * (TILE_ROWS - 1) + 171);
+        var scaledToHeight = ($window.height() - 42) / (YSTEP * (TILE_ROWS - 1) + 171);
         
         var scale = Math.min(scaledToWidth, scaledToHeight);
         
@@ -444,11 +497,11 @@ onLoad:
         backgroundSet = new TileSet(images[0], 101, 171, scale);
         backgroundSet.emptyBlock = BLOCK_EMPTY;
         wizardSet = new TileSet(images[1], 101, 171, scale);
-        wizardSet.aabb = wizardAABB;
+        //wizardSet.aabb = wizardAABB; 
         
-        console.debug(backgroundSet);
+        //console.debug(backgroundSet);
         
-        yStep = Math.floor(YSTEP * scale);
+        yStep = Math.round(YSTEP * scale);
         
         Application.yStep = yStep;
         
@@ -501,13 +554,7 @@ onLoad:
             heightMap[i] = heightMap[i] || 0;
         }
         
-        for (var y=0; y < TILE_ROWS; y++)
-        {
-            for (var x=0; x < TILES_PER_ROW; x++)
-            {
-                shadowsMap[tileOffset(x,y)] = getShadowTilesAt(x,y);
-            }
-        }
+        initShadowsMap();
         
         player = new Player(new KeyBasedControl({
             CONTROL_ATTACK : 32, 
@@ -515,40 +562,21 @@ onLoad:
             CONTROL_DOWN : 40, 
             CONTROL_LEFT : 37, 
             CONTROL_RIGHT : 39  
-        }), wizardSet, 0,0);
+        }), wizardSet, backgroundSet.tileWidth, yStep / 2);
         
-        player.x = backgroundSet.tileWidth;
-        player.y = yStep;
-
         var tileSet = player.tileSet;
         yCorrect = Math.floor((YSTEP/2) * tileSet.scale);
         
         ctx = canvas.getContext('2d');
-        ctx.fillStyle = "#aaa";
-        ctx.fillRect(0,0, width, height);
-        var yPos=0,xPos;
-        
-        for (var y=0; y < TILE_ROWS; y++)
-        {
-            xPos =0;
-            for (var x=0; x < TILES_PER_ROW; x++)
-            {
-                drawBlocks(x,y, xPos, yPos);
-                xPos += backgroundSet.tileWidth;
-            }
-            yPos += yStep;
-        }
-        
-        copy = document.createElement("canvas");
-        copy.width = canvas.width;
-        copy.height = canvas.height;
-        
+
         tmp = document.createElement("canvas");
         tmp.width = backgroundSet.tileWidth; 
         tmp.height = backgroundSet.tileHeight; 
-        
-        var copyCtx = copy.getContext('2d');
-        copyCtx.drawImage(canvas,0,0); 
+
+        copy = createBackBuffer();
+        copyCtx = copy.getContext('2d');
+
+        drawLevel(copyCtx);
         
         lastLoopTime = new Date().getTime() - 1;
         Application.mainLoop();
@@ -566,12 +594,52 @@ mainLoop:
         var delta = now - lastLoopTime;
         lastLoopTime = now;
         
-        restorePlayer(player);
+        if (fullUpdate)
+        {
+            // draw background copy into level
+            ctx.drawImage(copy,0,0);
+            fullUpdate = false;
+        }
+        else
+        {
+            restorePlayer(player);
+        }
 
         for (var i=0, len = gameObjects.length; i < len; i++)
         {
             var go = gameObjects[i]; 
-            go.draw(ctx,delta);
+
+            if (go.buffer && go.coveringBlocks)
+            {
+                ctx.drawImage(copy, go.xs, go.ys, go.w, go.h, go.xs, go.ys, go.w, go.h);
+            }
+        }
+        for (var i=0, len = gameObjects.length; i < len; i++)
+        {
+            var go = gameObjects[i]; 
+
+            if (go.buffer && go.coveringBlocks)
+            {
+                //console.debug(go);
+                var goCtx = go.buffer.getContext("2d");
+                goCtx.clearRect(0,0,go.w,go.h);
+                goCtx.globalCompositeOperation = "source-over";
+                go.draw(delta);
+                goCtx.globalCompositeOperation = "destination-out";
+                
+                for (var j = 0, jmax = go.coveringBlocks.length; j < jmax; j++)
+                {
+                    var cover = go.coveringBlocks[j];
+                    if (cover.block != BLOCK_EMPTY)
+                    {
+                        var offsetX = Math.floor(cover.tx * backgroundSet.tileWidth - go.xs);
+                        var offsetY = Math.floor(cover.ty * yStep - go.ys);
+                        backgroundSet.draw(goCtx, cover.block, offsetX, offsetY);
+                    }
+                }
+                
+                ctx.drawImage(go.buffer, go.xs, go.ys);
+            }
         }
         
         var tw = backgroundSet.tileWidth;
@@ -589,7 +657,7 @@ mainLoop:
         player.draw(tmpCtx);
         tmpCtx.globalCompositeOperation = "destination-out";
         
-        var block = level[tileY * TILES_PER_ROW + tileX];
+        var block = level[tileOffset(tileX,tileY)];
         var offsetX = Math.round(player.x - (tileX * tw)); 
         var offsetY = Math.round(player.y - (tileY * yStep)); 
         backgroundSet.draw(tmpCtx, block, -offsetX, -offsetY);
@@ -597,12 +665,28 @@ mainLoop:
         if (tileX < TILES_PER_ROW - 1)
         {
             var block = level[tileY * TILES_PER_ROW + tileX + 1];
-            backgroundSet.draw(tmpCtx, block, -offsetX + tw, -offsetY);
+            if (block != BLOCK_EMPTY)
+            {
+                backgroundSet.draw(tmpCtx, block, -offsetX + tw, -offsetY);
+            }
         }
         
         ctx.drawImage(tmp, player.x, player.y);
         
-        window.setTimeout( Application.mainLoop, 20);
+        for (var i = 0, len = jobs.length; i < len; i++)
+        {
+            jobs[i].run();
+        }
+        
+        if (updateCounter > updatedUntil)
+        {
+            jobs.push(new UpdateJob(ctx, updateCounter, createBackBuffer()));
+            updatedUntil = updateCounter;
+
+            initShadowsMap();
+        }
+        
+        requestAnimationFrame(Application.mainLoop);
     },
 onOpen:
     function()
@@ -633,7 +717,9 @@ function send(outgoing) {
     ws.send(JSON.stringify(outgoing));
 }
 
-$(this.Application.init);
+this.Application = Application;
+
+$(Application.init);
  
 
 console.debug("end");

@@ -3,8 +3,9 @@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%><%@
 taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %><%@
 taglib tagdir="/WEB-INF/tags" prefix="boom"%><boom:page title="home" baseScriptsOnly="true">
 <jsp:attribute name="head">
-<script src="../../script/effect/palette.js"></script>
-<script src="../../script/effect/sphere.js"></script>
+<script src="../../script/palette.js"></script>
+<script src="../../script/effect/common.js"></script>
+<script src="../../script/effect/blast-fx.js"></script>
 </jsp:attribute>
 <jsp:body>
 <div id="container">

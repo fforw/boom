@@ -75,6 +75,7 @@ input.text
 	filter: progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=90, Color='#000');
     padding: 5px 1ex;
     color: #fff;
+    margin-bottom: 4px;
     
     em
     {

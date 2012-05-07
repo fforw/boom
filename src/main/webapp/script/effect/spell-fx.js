@@ -4,7 +4,6 @@
 var TAU = Math.PI * 2;
 
 var backCtx, backBuffer, screen,texture,txo = 0,tyo = 0, txo2 = 0, tyo2 = 0,txo3=0;
-var colors,colors2,colors3;
 
 function setPixel(off, r,g,b,a)
 {
@@ -47,7 +46,8 @@ function drawSphere(txOff,tyOff, bg, palette, radius)
             
             if (col >= cutoff)
             {
-                var color = palette[Math.round(col - cutoff)];
+                var idx = ((col - cutoff) * palette.length / (255 - cutoff)) & 63;
+                var color = palette[ idx ];
                 setPixel(yOff + xOff, color.r, color.g, color.b, color.a);
             }
         }
@@ -65,9 +65,9 @@ function drawFrame()
         data[i+3] = 0;
     }
 
-    drawSphere(txo2,tyo2, true, colors, 64);
-    drawSphere(txo3,0, false, colors3, 48);
-    drawSphere(txo,tyo, false, colors2, 64);
+    drawSphere(txo2,tyo2, true, redFirePalette, 64);
+    drawSphere(txo3,0, false, glowingWhitePalette, 48);
+    drawSphere(txo,tyo, false, yellowFirePalette, 64);
     
     //backCtx.clearRect(0,0,256,256);
     backCtx.putImageData(screen, 0, 0);
@@ -88,7 +88,7 @@ function drawFrame()
     return canvas;
 }
 
-this.createSpellFrames = function()
+this.drawSpellFrames = function()
 {
     var a0 = 0; 
     var a1 = TAU / 4;
@@ -125,27 +125,6 @@ this.createSpellFrames = function()
         a2 += ya2 - xa2 * 256;
         a3 += ya3 - xa3 * 256;
     }
-
-    colors = palette(
-            new VectorRGBA(  0,  0,128,  0),
-            new VectorRGBA(128,  0, 64,255),
-            new VectorRGBA(192,  0,  0,255),
-            new VectorRGBA(256, 64,  0,255),
-            256 - cutoff);
-    
-    colors2 = palette(
-            new VectorRGBA(255,  0,  0,  0),
-            new VectorRGBA(255,153,  0,255),
-            new VectorRGBA(255,204, 64,255),
-            new VectorRGBA(255,255,192,255),
-            256 - cutoff);
-
-    colors3 = palette(
-            new VectorRGBA(255, 204,   0,  0),
-            new VectorRGBA(255, 255,   0,  128),
-            new VectorRGBA(255, 255, 255,  255),
-            new VectorRGBA(255, 255, 255,  255),
-            256 - cutoff);
 
     backBuffer = document.createElement("canvas");
     backBuffer.width = 128;
