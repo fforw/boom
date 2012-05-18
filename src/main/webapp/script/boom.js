@@ -298,7 +298,8 @@ function onSpellCast(ev, cast)
         }
     }
 
-    for (var i = 1; i < blast.br.len; i++)
+    // extra block on the right to fully cover explosion
+    for (var i = 1; i <= blast.br.len; i++)
     {
         var curTx = tx + i;
         var curTy = ty + 1;
