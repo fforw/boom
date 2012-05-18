@@ -39,6 +39,7 @@
 <div id="top">
     <em>boom!</em>
     <a href="../test/">test</a>
+    <a id="newLevel" href="#new">new</a>
 </div>
 <div id="content">
 <jsp:doBody />

@@ -1,5 +1,6 @@
 package org.boom.appcfg;
 
+import org.boom.level.LevelCreator;
 import org.boom.msg.ApplicationMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,6 +65,12 @@ public class ApplicationConfig
         json.setTypeConverterRepository(typeConverterRepository);
 
         return new JSONConfig(json, parser);
+    }
+    
+    @Bean
+    public LevelCreator levelCreator()
+    {
+        return new LevelCreator(21,18);
     }
     
 }

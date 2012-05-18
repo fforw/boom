@@ -21,7 +21,7 @@ init:
         this.dir = directions[CONTROL_RIGHT];
         this.walk = false;
         
-        this.power = 2;
+        this.power = 3;
 
         this.tmp = document.createElement("canvas");
         this.tmp.width = tileSet.tileWidth;

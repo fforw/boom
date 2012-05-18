@@ -1,16 +1,11 @@
 var TILES_PER_ROW = 21;
-var TILE_ROWS = 19;
-var YSTEP = 79; 
+var TILE_ROWS = 18;
+var YSTEP = 80; 
 
 var UPDATE_ROWS_PER_FRAME = 4;
 
 var gameObjects = [];
-var level = [];
-
-for (var i=0, len = TILES_PER_ROW * TILE_ROWS; i < len ; i++)
-{
-    level[i] = 0;
-}
+var level, room;
 
 var heightMap = [];
 var shadowsMap = [];
@@ -30,87 +25,7 @@ var canvas,ctx, width, height,yStep,yCorrect;
 
 var player;
 
-var obstacles = [ BLOCK_ROCK, BLOCK_TREE_TALL, BLOCK_TREE_SHORT, BLOCK_DIRT_BLOCK, BLOCK_GRASS_BLOCK, BLOCK_DIRT_BLOCK, BLOCK_GRASS_BLOCK];
 
-function obstacle()
-{
-    return obstacles[Math.round( v = Math.random() * obstacles.length)];
-}
-
-function drawSquare(sx ,sy, w, h, block, randomGap)
-{
-    var ex = sx + w - 1;
-    var ey = sy + h - 1;
-    
-    var g1x = -1;
-    var g2x = -1;
-    var g1y = -1;
-    var g2y = -1;
-    
-    if (randomGap)
-    {
-        g1x = sx + Math.floor(Math.random() * ( ex - sx ));
-        g2x = sx + Math.floor(Math.random() * ( ex - sx ));
-        g1y = sy + Math.floor(Math.random() * ( ey - sy ));
-        g2y = sy + Math.floor(Math.random() * ( ey - sy ));
-    }
-
-    
-    for (var x = sx; x <= ex; x++)
-    {
-        if (x != g1x)
-        {
-            setBlock(x, sy,block);
-        }
-        else
-        {
-            if (Math.random() > 0.5)
-            {
-                setBlock(x, sy, obstacle());
-            }
-        }
-        
-        if (x != g2x)
-        {
-            setBlock(x, ey,block);
-        }
-        else
-        {
-            if (Math.random() > 0.5)
-            {
-                setBlock(x, ey, obstacle());
-            }
-        }
-    }
-
-    for (var y = sy; y <= ey; y++)
-    {
-        if (y != g1y)
-        {
-            setBlock(sx, y,block);
-        }
-        else
-        {
-            if (Math.random() > 0.5)
-            {
-                setBlock(sx, y, obstacle());
-            }
-        }
-        if (y != g1y)
-        {
-            setBlock(ex, y,block);
-        }
-        else
-        {
-            if (Math.random() > 0.5)
-            {
-                setBlock(ex, y, obstacle());
-            }
-        }
-    }
-}
-
-var debugColors = ["#f00","#0f0","#00f", "#ccc"];
 
 function drawBlocks(ctx,tileX,tileY, x,y)
 {
@@ -418,6 +333,14 @@ function createBackBuffer()
     return buffer;
 }
 
+function initHeightMap()
+{
+    for (var i=0, len = TILE_ROWS * TILES_PER_ROW; i < len; i++)
+    {
+        heightMap[i] = blockHeight(level[i]) || 0;
+    }
+}
+
 function initShadowsMap()
 {
     var off = 0;
@@ -465,14 +388,6 @@ var Application = {
 init:
     function()
     {
-        var url = 'ws://boom.localhost:9876/appsocket';
-
-        ws = new WebSocket(url);
-        ws.onopen = Application.onOpen;
-        ws.onclose = Application.disconnected;
-        ws.onerror = Application.onerror;
-        ws.onmessage = Application.onMessage;
-
         var $canvas = $("#teh_canvas");
         canvas = $canvas[0];
 
@@ -481,6 +396,10 @@ init:
         $doc.bind("spellCast", onSpellCast)
             .bind("spellDestroy", onSpellDestroy);
         
+        $("#newLevel").click(function(){
+            send({type:"RequestNewLevel", "room" : room});
+        });
+        
         Loader.load(["../../image/sheet.png","../../image/wizard-anim.png"], Application.onLoad);
     },
 onLoad:
@@ -488,8 +407,11 @@ onLoad:
     {
         var $window = $(window);
         
-        var scaledToWidth = ($window.width() - 1) / (101 * TILES_PER_ROW);
-        var scaledToHeight = ($window.height() - 42) / (YSTEP * (TILE_ROWS - 1) + 171);
+        var widthAdjust = 2;
+        var topHeight = $("#top").height() + 20;
+        
+        var scaledToWidth = ($window.width() - widthAdjust) / (101 * TILES_PER_ROW);
+        var scaledToHeight = ($window.height() - topHeight) / (YSTEP * (TILE_ROWS - 1) + 171);
         
         var scale = Math.min(scaledToWidth, scaledToHeight);
         
@@ -508,53 +430,24 @@ onLoad:
         
         width = backgroundSet.tileWidth * TILES_PER_ROW;
         height = (yStep * (TILE_ROWS - 1)) + backgroundSet.tileHeight;
-        
-        var x = 0;
-        var y = 0;
-        var w = TILES_PER_ROW;
-        var h = TILE_ROWS;
-        
-        do
-        {
-            drawSquare( x, y, w, h, x == 0 ? BLOCK_STONE_BLOCK_TALL : BLOCK_STONE_BLOCK , x > 0);
-            x += 2;
-            y += 2;
-            w -= 4;
-            h -= 4;
-            
-        } while ( w > 0 && h > 0 );
-        
-        
-        var xmid = Math.floor(TILES_PER_ROW / 2) + 1;
-        var ymid = Math.floor(TILE_ROWS / 2) + 1;
-        var xmax = TILES_PER_ROW - 1;
-        var ymax = TILE_ROWS - 1;
- 
-        setBlock(   0,    0, BLOCK_WALL_BLOCK_TALL); 
-        setBlock(xmax,    0, BLOCK_WALL_BLOCK_TALL); 
-//        setBlock(   0, ymax, BLOCK_WALL_BLOCK_TALL); 
-//        setBlock(xmax, ymax, BLOCK_WALL_BLOCK_TALL);
-
-        for (var i=1,len=TILES_PER_ROW - 1; i < len; i++)
-        {
-            setBlock(i, ymax, BLOCK_EMPTY);
-        }
-        
-        setBlock(xmid,    0, BLOCK_PAD); 
-        setBlock( xmid, ymax, BLOCK_PAD); 
-        setBlock(    0, ymid, BLOCK_PAD);
-        setBlock( xmax, ymid, BLOCK_PAD); 
 
         canvas.width = width;
         canvas.height = height;
         
         $("#container").width(width);
-
-        for (var i=0, len = TILE_ROWS * TILES_PER_ROW; i < len; i++)
-        {
-            heightMap[i] = heightMap[i] || 0;
-        }
         
+        var url = 'ws://boom.localhost:9876/appsocket';
+
+        ws = new WebSocket(url);
+        ws.onopen = Application.onOpen;
+        ws.onclose = Application.disconnected;
+        ws.onerror = Application.onerror;
+        ws.onmessage = Application.onMessage;
+    },
+onNewLevel: 
+    function()
+    {
+        initHeightMap();
         initShadowsMap();
         
         player = new Player(new KeyBasedControl({
@@ -612,7 +505,24 @@ mainLoop:
 
             if (go.buffer && go.coveringBlocks)
             {
-                ctx.drawImage(copy, go.xs, go.ys, go.w, go.h, go.xs, go.ys, go.w, go.h);
+                var x = go.xs;
+                var y = go.ys;
+                var w = go.w;
+                var h = go.h;
+                
+                if (x < 0)
+                {
+                    w += x;
+                    x = 0
+                }
+                if (y < 0)
+                {
+                    h += y;
+                    y = 0
+                }
+                
+                //console.debug(copy, x,y,w,h,x,y,w,h);
+                ctx.drawImage(copy, x,y,w,h,x,y,w,h);
             }
         }
         for (var i=0, len = gameObjects.length; i < len; i++)
@@ -693,7 +603,10 @@ onOpen:
     function()
     {
         console.info("connected");
-        send({"type":"Login"});
+        send({
+            type:"JoinRoom",
+            name:"test"
+        });
     },
 onClose:
     function()
@@ -708,8 +621,17 @@ onError:
 onMessage:
     function(e)
     {
-        var data = JSON.parse(e.data);
-        console.debug("message: %o", data);
+        var msg = JSON.parse(e.data);
+        console.debug("message: %o", msg);
+        
+        switch(msg.type)
+        {
+            case "InitLevel":
+                room = msg.room;
+                level = msg.level.data;
+                Application.onNewLevel();
+                break;
+        }
     }
 };
 
