@@ -1,3 +1,4 @@
+
 var BLOCK_EMPTY = 0;
 var BLOCK_BROWN_BLOCK = 1;
 var BLOCK_CHARACTER_BOY = 2;
